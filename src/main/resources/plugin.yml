@@ -1,0 +1,21 @@
+author: wizzledonker
+database: false
+description: Plugin for oblicom city, charges players and promotes them after lot purchase.
+main: me.wizzledonker.plugins.signrank.signRank
+name: SignRank
+startup: postworld
+version: '1.2'
+depend: [Vault, WorldGuard, oblicomRanks]
+permissions:
+  SignRank.purchase:
+    Description: Defines whether or not a player can purchase a lot
+    Default: op
+  SignRank.create:
+    Description: Defines whether or not a player can create lot signs
+    Default: op
+  SignRank.exempt:
+    Description: These players do not get automatically changed when purchasing a lot
+    Default: op
+  SignRank.update:
+    Description: These players can update a lot which isn't their own
+    Default: op
