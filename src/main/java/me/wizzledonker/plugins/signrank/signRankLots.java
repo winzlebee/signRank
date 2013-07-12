@@ -7,6 +7,7 @@ package me.wizzledonker.plugins.signrank;
 import com.sk89q.worldedit.BlockVector;
 import com.sk89q.worldedit.Vector;
 import com.sk89q.worldguard.domains.DefaultDomain;
+import com.sk89q.worldguard.protection.databases.ProtectionDatabaseException;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import java.util.ArrayList;
@@ -14,6 +15,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 
@@ -34,29 +37,33 @@ public class signRankLots {
     //The faces to be used when checking
     BlockFace[] faces = { BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST, BlockFace.UP, BlockFace.DOWN };
     
-    public boolean setupWorldguardRegion(Block fenceBlock, String owner) {
+    public boolean setupWorldguardRegion(Block signBlock, String owner) {
         
         this.fences.clear();
         
-        Block last = fenceBlock;
+        Block last = signBlock;
         Block check = last;
         
         //For all sides of the square
         while (true) {
             this.found = false;
+            int count = 0;
             for (BlockFace direction : faces) {
-                fenceBlock  = check.getRelative(direction);
+                signBlock  = check.getRelative(direction);
                 //Make sure it isn't the same as the last cycle
-                if ((last.getX() != fenceBlock.getX()) || (last.getY() != fenceBlock.getY()) || (last.getZ() != fenceBlock.getZ())) {
-                    if (plugin.PROTECT_BLOCK_TYPES.contains(fenceBlock.getRelative(direction).getTypeId())) {
-                        this.found = true;
-                        last = check;
-                        check = fenceBlock;
-                        //Done checking around for this cycle
-                        break;
-                    }
+                if ((last.getX() == signBlock.getX()) && (last.getY() == signBlock.getY()) && (last.getZ() == signBlock.getZ()))
+                    continue;
+                if (plugin.PROTECT_BLOCK_TYPES.contains(signBlock.getTypeId())) {
+                    this.found = true;
+                    last = check;
+                    check = signBlock;
+                    System.out.println("Added new FenceBlock at " + signBlock.getLocation());
+                    count++;
+                    //Done checking around for this cycle
+                    break;
                 }
             }
+            System.out.println(count);
             if (!this.found) {
               break;
             }
@@ -67,44 +74,51 @@ public class signRankLots {
         
         if (!this.found)
         {
-          plugin.getServer().getLogger().log(Level.WARNING, "Fence wasn't closed in world {0}", fenceBlock.getWorld().getName());
+          plugin.getServer().getLogger().log(Level.WARNING, "Fence wasn't closed in world {0}", signBlock.getWorld().getName());
           this.fences.clear();
           return false;
         }
         
-        ProtectedCuboidRegion region = new ProtectedCuboidRegion(owner + "lot", blockVectorFromBlock(getPrimaryBlock()), blockVectorFromBlock(getSecondaryBlock()));
+        ProtectedCuboidRegion region = new ProtectedCuboidRegion(owner + "lot", blockVectorFromLoc(getPrimaryLoc()), blockVectorFromLoc(getSecondaryLoc()));
         region.setPriority(2);
         DefaultDomain owners = new DefaultDomain();
         owners.addPlayer(owner);
         region.setOwners(owners);
-        signRank.worldGuard.getRegionManager(fenceBlock.getWorld()).addRegion(region);
+        signRank.worldGuard.getRegionManager(signBlock.getWorld()).addRegion(region);
+        try {
+            signRank.worldGuard.getRegionManager(signBlock.getWorld()).save();
+        } catch (ProtectionDatabaseException ex) {
+            Logger.getLogger(signRankLots.class.getName()).log(Level.SEVERE, null, ex);
+        }
         return true;
     }
     
-    private BlockVector blockVectorFromBlock(Block block) {
-        return new BlockVector(block.getX(), block.getY(), block.getZ());
+    private BlockVector blockVectorFromLoc(Location loc) {
+        return new BlockVector(loc.getX(), loc.getY(), loc.getZ());
     }
     
-    private Block getPrimaryBlock() {
+    private Location getPrimaryLoc() {
         Block result = fences.get(0);
         for (Block block : fences) {
-            if (block.getX() < result.getX() && block.getZ() < result.getZ()) {
+            if (block.getX() < result.getX() || block.getZ() < result.getZ()) {
                 result = block;
             }
         }
-        result.getLocation().setY(0);
-        return result;
+        Location end = result.getLocation();
+        end.setY(0);
+        return end;
     }
     
-    private Block getSecondaryBlock() {
+    private Location getSecondaryLoc() {
         Block result = fences.get(0);
         for (Block block : fences) {
-            if (block.getX() > result.getX() && block.getZ() > result.getZ()) {
+            if (block.getX() > result.getX() || block.getZ() > result.getZ()) {
                 result = block;
             }
         }
-        result.getLocation().setY(256);
-        return result;
+        Location end = result.getLocation();
+        end.setY(256);
+        return end;
     }
     
     

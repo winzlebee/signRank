@@ -52,7 +52,7 @@ public class signRankListener implements Listener {
                 return;
             }
             plugin.ChargeAndPromote(player, plugin.determineValue(lottype), player.getWorld().getName());
-            plugin.lots.setupWorldguardRegion(block.getRelative(BlockFace.DOWN), player.getName());
+            plugin.lots.setupWorldguardRegion(block, player.getName());
             signblock.setLine(0, player.getName() + "'s");
             signblock.setLine(1, lottype + " lot");
             signblock.setLine(2, "");
@@ -66,14 +66,15 @@ public class signRankListener implements Listener {
     public void onSignChange(SignChangeEvent event) {
         Player player = event.getPlayer();
         if (event.getLine(0).toLowerCase().contains("[update]")) {
-            if (!signRank.worldGuard.getRegionManager(player.getWorld()).getApplicableRegions(event.getBlock().getLocation()).iterator().hasNext()) {
+            if (signRank.worldGuard.getRegionManager(player.getWorld()).getApplicableRegions(event.getBlock().getLocation()).iterator().hasNext()) {
                 ProtectedRegion region = signRank.worldGuard.getRegionManager(player.getWorld()).getApplicableRegions(event.getBlock().getLocation()).iterator().next();
                 if (!plugin.IGNORE_REGIONS.contains(region.getId())) {
                     boolean isOwner = region.isOwner(player.getName());
 
                     if (player.hasPermission("SignRank.update") || isOwner) {
-                        for (String line : event.getLines()) {
-                            if (line != "") {
+                        for (int i = 1 ; i < event.getLines().length ; i++) {
+                            String line = event.getLines()[i];
+                            if (line.length() != 0) {
                                 DefaultDomain owners = region.getOwners();
                                 owners.addPlayer(line);
                                 region.setOwners(owners);
@@ -85,9 +86,10 @@ public class signRankListener implements Listener {
                 }
             }
             if (player.hasPermission("SignRank.update")) {
-                plugin.lots.setupWorldguardRegion(event.getBlock().getRelative(BlockFace.DOWN), event.getLine(1));
+                plugin.lots.setupWorldguardRegion(event.getBlock(), event.getLine(1));
                 player.sendMessage(ChatColor.GREEN + "A new lot has been created for " + event.getLine(1));
             }
+            return;
         }
         if (player.hasPermission("SignRank.create")) {
             return;
