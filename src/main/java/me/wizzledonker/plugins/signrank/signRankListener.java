@@ -5,7 +5,10 @@
 package me.wizzledonker.plugins.signrank;
 
 import com.sk89q.worldguard.domains.DefaultDomain;
+import com.sk89q.worldguard.protection.databases.ProtectionDatabaseException;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -78,6 +81,11 @@ public class signRankListener implements Listener {
                                 DefaultDomain owners = region.getOwners();
                                 owners.addPlayer(line);
                                 region.setOwners(owners);
+                                try {
+                                    signRank.worldGuard.getRegionManager(player.getWorld()).save();
+                                } catch (ProtectionDatabaseException ex) {
+                                    Logger.getLogger(signRankListener.class.getName()).log(Level.SEVERE, null, ex);
+                                }
                                 player.sendMessage(line + ChatColor.GREEN + " Added");
                             }
                         }
@@ -89,6 +97,26 @@ public class signRankListener implements Listener {
                 plugin.lots.setupWorldguardRegion(event.getBlock(), event.getLine(1));
                 player.sendMessage(ChatColor.GREEN + "A new lot has been created for " + event.getLine(1));
             }
+            return;
+        }
+        if (event.getLine(0).toLowerCase().contains("[remove]")) {
+            if (signRank.worldGuard.getRegionManager(player.getWorld()).getApplicableRegions(event.getBlock().getLocation()).iterator().hasNext()) {
+                ProtectedRegion region = signRank.worldGuard.getRegionManager(player.getWorld()).getApplicableRegions(event.getBlock().getLocation()).iterator().next();
+                if (!plugin.IGNORE_REGIONS.contains(region.getId())) {
+                    boolean isOwner = region.isOwner(player.getName());
+                    if (player.hasPermission("SignRank.remove") || isOwner) {
+                        signRank.worldGuard.getRegionManager(event.getBlock().getWorld()).removeRegion(region.getId());
+                        try {
+                            signRank.worldGuard.getRegionManager(event.getBlock().getWorld()).save();
+                        } catch (ProtectionDatabaseException ex) {
+                            Logger.getLogger(signRankListener.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                        player.sendMessage(ChatColor.GREEN + "The lot for " + region.getId().replace("lot", "") + " has been removed.");
+                        return;
+                    }
+                }
+            }
+            player.sendMessage(ChatColor.RED + "There's no lot here to remove!");
             return;
         }
         if (player.hasPermission("SignRank.create")) {
