@@ -54,8 +54,11 @@ public class signRankListener implements Listener {
                 player.sendMessage(ChatColor.RED + "You do not have enough money to purchase that lot!");
                 return;
             }
+            if (!plugin.lots.setupWorldguardRegion(block, player.getName())) {
+                player.sendMessage(ChatColor.RED + "The fence around this lot isn't enclosed. Find another. Notify a mod too!");
+                return;
+            }
             plugin.ChargeAndPromote(player, plugin.determineValue(lottype), player.getWorld().getName());
-            plugin.lots.setupWorldguardRegion(block, player.getName());
             signblock.setLine(0, player.getName() + "'s");
             signblock.setLine(1, lottype + " lot");
             signblock.setLine(2, "");
@@ -94,7 +97,10 @@ public class signRankListener implements Listener {
                 }
             }
             if (player.hasPermission("SignRank.update")) {
-                plugin.lots.setupWorldguardRegion(event.getBlock(), event.getLine(1));
+                if(!plugin.lots.setupWorldguardRegion(event.getBlock(), event.getLine(1))) {
+                    player.sendMessage(ChatColor.RED + "That fence isn't enclosed! Make sure there are no gaps!");
+                    return;
+                }
                 player.sendMessage(ChatColor.GREEN + "A new lot has been created for " + event.getLine(1));
             }
             return;

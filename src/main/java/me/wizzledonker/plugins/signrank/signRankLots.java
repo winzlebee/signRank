@@ -47,7 +47,6 @@ public class signRankLots {
         //For all sides of the square
         while (true) {
             this.found = false;
-            int count = 0;
             for (BlockFace direction : faces) {
                 signBlock  = check.getRelative(direction);
                 //Make sure it isn't the same as the last cycle
@@ -57,13 +56,10 @@ public class signRankLots {
                     this.found = true;
                     last = check;
                     check = signBlock;
-                    System.out.println("Added new FenceBlock at " + signBlock.getLocation());
-                    count++;
                     //Done checking around for this cycle
                     break;
                 }
             }
-            System.out.println(count);
             if (!this.found) {
               break;
             }
