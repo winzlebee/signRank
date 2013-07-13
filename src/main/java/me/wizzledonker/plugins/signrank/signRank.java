@@ -85,19 +85,22 @@ public class signRank extends JavaPlugin {
     
     public double determineValue(String type) {
         double price = 500.00;
-        price = getConfig().getDouble("lot_prices." + type);
+        price = getConfig().getDouble("lot_prices." + type + ".price");
         return price;
     }
     
     public String determineLotType(ProtectedRegion region) {
-        int size = region.getMaximumPoint().getBlockX() - region.getMinimumPoint().getBlockX();
+        int size = Math.abs(region.getMaximumPoint().getBlockX() - region.getMinimumPoint().getBlockX());
+        String selection = getSmallestLot();
         String prev = getSmallestLot();
         for (String current : getConfig().getConfigurationSection("lot_prices").getKeys(false)) {
             if ((getConfig().getInt("lot_prices." + prev + ".size") < size) && (getConfig().getInt("lot_prices." + current + ".size") > size)) {
-                return prev;
+                if (getConfig().getInt("lot_prices." + selection + ".size") > getConfig().getInt("lot_prices." + current + ".size")) {
+                    selection = current;
+                }
             }
         }
-        return "regular";
+        return selection;
     }
     
     public String getSmallestLot() {

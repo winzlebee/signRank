@@ -128,6 +128,9 @@ public class signRankListener implements Listener {
             player.sendMessage(ChatColor.RED + "There's no lot here to sell!");
             return;
         }
+        if (player.hasPermission("SignRank.create")) {
+            return;
+        }
         if (event.getLine(0).toLowerCase().contains("[lot]")) {
             player.sendMessage(ChatColor.RED + "You're not allowed to create a lot sign!");
             event.setCancelled(true);
