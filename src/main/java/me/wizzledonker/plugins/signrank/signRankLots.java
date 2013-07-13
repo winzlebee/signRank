@@ -74,8 +74,16 @@ public class signRankLots {
           this.fences.clear();
           return false;
         }
-        
-        ProtectedCuboidRegion region = new ProtectedCuboidRegion(owner + "lot", blockVectorFromLoc(getPrimaryLoc()), blockVectorFromLoc(getSecondaryLoc()));
+        String id = owner + "lot";
+        if (signRank.worldGuard.getRegionManager(signBlock.getWorld()).hasRegion(id)) {
+            for (int i = 1; i > 0; i++) {
+                if (!signRank.worldGuard.getRegionManager(signBlock.getWorld()).hasRegion(id + i)) {
+                    id = id + i;
+                    break;
+                }
+            }
+        }
+        ProtectedCuboidRegion region = new ProtectedCuboidRegion(id, blockVectorFromLoc(getPrimaryLoc()), blockVectorFromLoc(getSecondaryLoc()));
         region.setPriority(2);
         DefaultDomain owners = new DefaultDomain();
         owners.addPlayer(owner);
@@ -87,6 +95,10 @@ public class signRankLots {
             Logger.getLogger(signRankLots.class.getName()).log(Level.SEVERE, null, ex);
         }
         return true;
+    }
+    
+    public int getAmountOfFencesLast() {
+        return fences.size();
     }
     
     private BlockVector blockVectorFromLoc(Location loc) {

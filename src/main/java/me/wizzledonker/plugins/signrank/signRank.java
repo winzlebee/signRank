@@ -25,6 +25,7 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 public class signRank extends JavaPlugin {
     public List<Integer> PROTECT_BLOCK_TYPES;
     public List<String> IGNORE_REGIONS;
+    public List<String> FACTION_REGIONS;
     
     public static Economy economy = null;
     public static Permission permission = null;
@@ -63,6 +64,13 @@ public class signRank extends JavaPlugin {
             getConfig().set("ignore_regions", IGNORE_REGIONS);
         }
         
+        if (!getConfig().getStringList("faction_regions").isEmpty()) {
+            FACTION_REGIONS = getConfig().getStringList("faction_regions");
+        } else {
+            FACTION_REGIONS = Arrays.asList("police", "criminals");
+            getConfig().set("faction_regions", FACTION_REGIONS);
+        }
+        
         saveConfig();
         
         PROTECT_BLOCK_TYPES = getConfig().getIntegerList("protect_blocks");
@@ -79,6 +87,27 @@ public class signRank extends JavaPlugin {
         double price = 500.00;
         price = getConfig().getDouble("lot_prices." + type);
         return price;
+    }
+    
+    public String determineLotType(ProtectedRegion region) {
+        int size = region.getMaximumPoint().getBlockX() - region.getMinimumPoint().getBlockX();
+        String prev = getSmallestLot();
+        for (String current : getConfig().getConfigurationSection("lot_prices").getKeys(false)) {
+            if ((getConfig().getInt("lot_prices." + prev + ".size") < size) && (getConfig().getInt("lot_prices." + current + ".size") > size)) {
+                return prev;
+            }
+        }
+        return "regular";
+    }
+    
+    public String getSmallestLot() {
+        String current = "regular";
+        for (String currentType : getConfig().getConfigurationSection("lot_prices").getKeys(false)) {
+            if (getConfig().getInt("lot_prices." + currentType + ".size") < getConfig().getInt("lot_prices." + current + ".size")) {
+                current = currentType;
+            }
+        }
+        return current;
     }
     
     public void ChargeAndPromote(Player player, Double amount, String world) {

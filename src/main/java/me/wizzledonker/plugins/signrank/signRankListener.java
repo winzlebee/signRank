@@ -74,7 +74,7 @@ public class signRankListener implements Listener {
         if (event.getLine(0).toLowerCase().contains("[update]")) {
             if (signRank.worldGuard.getRegionManager(player.getWorld()).getApplicableRegions(event.getBlock().getLocation()).iterator().hasNext()) {
                 ProtectedRegion region = signRank.worldGuard.getRegionManager(player.getWorld()).getApplicableRegions(event.getBlock().getLocation()).iterator().next();
-                if (!plugin.IGNORE_REGIONS.contains(region.getId())) {
+                if (!plugin.IGNORE_REGIONS.contains(region.getId()) && !plugin.FACTION_REGIONS.contains(region.getId())) {
                     boolean isOwner = region.isOwner(player.getName());
 
                     if (player.hasPermission("SignRank.update") || isOwner) {
@@ -105,27 +105,27 @@ public class signRankListener implements Listener {
             }
             return;
         }
-        if (event.getLine(0).toLowerCase().contains("[remove]")) {
+        if (event.getLine(0).toLowerCase().contains("[sell]")) {
             if (signRank.worldGuard.getRegionManager(player.getWorld()).getApplicableRegions(event.getBlock().getLocation()).iterator().hasNext()) {
                 ProtectedRegion region = signRank.worldGuard.getRegionManager(player.getWorld()).getApplicableRegions(event.getBlock().getLocation()).iterator().next();
-                if (!plugin.IGNORE_REGIONS.contains(region.getId())) {
+                if (!plugin.IGNORE_REGIONS.contains(region.getId()) && !plugin.FACTION_REGIONS.contains(region.getId())) {
                     boolean isOwner = region.isOwner(player.getName());
-                    if (player.hasPermission("SignRank.remove") || isOwner) {
+                    if (player.hasPermission("SignRank.sell") || isOwner) {
                         signRank.worldGuard.getRegionManager(event.getBlock().getWorld()).removeRegion(region.getId());
+                        event.setLine(0, "[lot]");
+                        event.setLine(1, plugin.determineLotType(region));
+                        signRank.economy.depositPlayer(player.getName(), plugin.determineValue(plugin.determineLotType(region)));
                         try {
                             signRank.worldGuard.getRegionManager(event.getBlock().getWorld()).save();
                         } catch (ProtectionDatabaseException ex) {
                             Logger.getLogger(signRankListener.class.getName()).log(Level.SEVERE, null, ex);
                         }
-                        player.sendMessage(ChatColor.GREEN + "The lot for " + region.getId().replace("lot", "") + " has been removed.");
+                        player.sendMessage(ChatColor.GREEN + "You have sold this lot and recieved " + ChatColor.WHITE + plugin.determineValue(plugin.determineLotType(region)) + signRank.economy.currencyNameSingular());
                         return;
                     }
                 }
             }
-            player.sendMessage(ChatColor.RED + "There's no lot here to remove!");
-            return;
-        }
-        if (player.hasPermission("SignRank.create")) {
+            player.sendMessage(ChatColor.RED + "There's no lot here to sell!");
             return;
         }
         if (event.getLine(0).toLowerCase().contains("[lot]")) {

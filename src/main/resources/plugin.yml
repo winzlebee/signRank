@@ -19,6 +19,6 @@ permissions:
   SignRank.update:
     Description: These players can update a lot which isn't their own
     Default: op
-  SignRank.remove:
-    Description: These players may remove a protection from other's lots
+  SignRank.sell:
+    Description: These players may sell protections which aren't their own
     Default: op
