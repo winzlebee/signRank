@@ -16,6 +16,7 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.SignChangeEvent;
@@ -68,7 +69,7 @@ public class signRankListener implements Listener {
         }
     }
     
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onSignChange(SignChangeEvent event) {
         Player player = event.getPlayer();
         if (event.getLine(0).toLowerCase().contains("[update]")) {
@@ -111,10 +112,10 @@ public class signRankListener implements Listener {
                 if (!plugin.IGNORE_REGIONS.contains(region.getId()) && !plugin.FACTION_REGIONS.contains(region.getId())) {
                     boolean isOwner = region.isOwner(player.getName());
                     if (player.hasPermission("SignRank.sell") || isOwner) {
-                        signRank.worldGuard.getRegionManager(event.getBlock().getWorld()).removeRegion(region.getId());
                         event.setLine(0, "[lot]");
                         event.setLine(1, plugin.determineLotType(region));
                         signRank.economy.depositPlayer(player.getName(), plugin.determineValue(plugin.determineLotType(region)));
+                        signRank.worldGuard.getRegionManager(event.getBlock().getWorld()).removeRegion(region.getId());
                         try {
                             signRank.worldGuard.getRegionManager(event.getBlock().getWorld()).save();
                         } catch (ProtectionDatabaseException ex) {
