@@ -51,7 +51,7 @@ public class signRankListener implements Listener {
             }
             Sign signblock = ((Sign) block.getState());
             String lottype = signblock.getLine(1);
-            if (signRank.economy.getBalance(player.getName()) < plugin.determineValue(lottype)) {
+            if (signRank.economy.getBalance(player) < plugin.determineValue(lottype)) {
                 player.sendMessage(ChatColor.RED + "You do not have enough money to purchase that lot!");
                 return;
             }

@@ -50,6 +50,7 @@ public class signRank extends JavaPlugin {
         
         lots = new signRankLots(this);
         
+        //Materials the fence may be created from
         if (!getConfig().getIntegerList("protect_blocks").isEmpty()) {
             PROTECT_BLOCK_TYPES = getConfig().getIntegerList("protect_blocks");
         } else {
@@ -57,6 +58,7 @@ public class signRank extends JavaPlugin {
             getConfig().set("protect_blocks", PROTECT_BLOCK_TYPES);
         }
         
+        //Regions to dissallow the protection of blocks
         if (!getConfig().getStringList("ignore_regions").isEmpty()) {
             IGNORE_REGIONS = getConfig().getStringList("ignore_regions");
         } else {
@@ -64,6 +66,7 @@ public class signRank extends JavaPlugin {
             getConfig().set("ignore_regions", IGNORE_REGIONS);
         }
         
+        //Regions which will result in a change of group when a lot is purchased
         if (!getConfig().getStringList("faction_regions").isEmpty()) {
             FACTION_REGIONS = getConfig().getStringList("faction_regions");
         } else {
@@ -114,7 +117,7 @@ public class signRank extends JavaPlugin {
     }
     
     public void ChargeAndPromote(Player player, Double amount, String world) {
-        economy.withdrawPlayer(player.getName(), amount);
+        economy.withdrawPlayer(player, amount);
         //Find the WorldGuard region
         if (!player.hasPermission("SignRank.exempt")) {
             RegionManager rm = worldGuard.getRegionManager(player.getWorld());

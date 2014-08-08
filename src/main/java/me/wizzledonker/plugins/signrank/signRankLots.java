@@ -106,6 +106,7 @@ public class signRankLots {
     }
     
     private Location getPrimaryLoc() {
+        //Gets the primary locator for the lot... including the ground
         Block result = fences.get(0);
         for (Block block : fences) {
             if (block.getX() < result.getX() || block.getZ() < result.getZ()) {
@@ -118,6 +119,7 @@ public class signRankLots {
     }
     
     private Location getSecondaryLoc() {
+        //The secondary locator, which will be the maximum X and Z block while having the max Y value
         Block result = fences.get(0);
         for (Block block : fences) {
             if (block.getX() > result.getX() || block.getZ() > result.getZ()) {
