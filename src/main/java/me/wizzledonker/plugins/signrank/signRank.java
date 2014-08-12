@@ -7,6 +7,7 @@ import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
 import me.wizzledonker.plugins.oblicomranks.OblicomRankScore;
 import me.wizzledonker.plugins.oblicomranks.OblicomRanks;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -93,7 +94,7 @@ public class signRank extends JavaPlugin {
     }
     
     public String determineLotType(ProtectedRegion region) {
-        int size = Math.abs(region.getMaximumPoint().getBlockX() - region.getMinimumPoint().getBlockX());
+        int size = Math.abs(region.getMaximumPoint().getBlockX() - region.getMinimumPoint().getBlockX())*Math.abs(region.getMaximumPoint().getBlockZ() - region.getMinimumPoint().getBlockZ());
         String selection = getSmallestLot();
         String prev = getSmallestLot();
         for (String current : getConfig().getConfigurationSection("lot_prices").getKeys(false)) {
@@ -103,6 +104,7 @@ public class signRank extends JavaPlugin {
                 }
             }
         }
+        this.getServer().getLogger().log(Level.INFO, "A lot was sold of size {0} as {1}", new Object[]{size, selection});
         return selection;
     }
     

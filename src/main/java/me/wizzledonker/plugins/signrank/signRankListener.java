@@ -114,7 +114,7 @@ public class signRankListener implements Listener {
                     if (player.hasPermission("SignRank.sell") || isOwner) {
                         event.setLine(0, "[lot]");
                         event.setLine(1, plugin.determineLotType(region));
-                        signRank.economy.depositPlayer(player.getName(), plugin.determineValue(plugin.determineLotType(region)));
+                        signRank.economy.depositPlayer(player, plugin.determineValue(plugin.determineLotType(region)));
                         signRank.worldGuard.getRegionManager(event.getBlock().getWorld()).removeRegion(region.getId());
                         try {
                             signRank.worldGuard.getRegionManager(event.getBlock().getWorld()).save();
@@ -122,6 +122,7 @@ public class signRankListener implements Listener {
                             Logger.getLogger(signRankListener.class.getName()).log(Level.SEVERE, null, ex);
                         }
                         player.sendMessage(ChatColor.GREEN + "You have sold this lot and recieved " + ChatColor.WHITE + plugin.determineValue(plugin.determineLotType(region)) + signRank.economy.currencyNameSingular());
+                        plugin.scores.subtractScore(plugin.getConfig().getInt("lot_score", 100), player);
                         return;
                     }
                 }
