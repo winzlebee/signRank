@@ -29,6 +29,7 @@ public class signRank extends JavaPlugin {
     public List<String> FACTION_REGIONS;
     
     public int PROTECT_DISTANCE;
+    public int MAX_REGIONS;
     
     public static Economy economy = null;
     public static Permission permission = null;
@@ -83,6 +84,13 @@ public class signRank extends JavaPlugin {
         } else {
             PROTECT_DISTANCE = 3;
             getConfig().set("protect_distance", PROTECT_DISTANCE);
+        }
+        
+        if (getConfig().isInt("max_regions")) {
+            MAX_REGIONS = getConfig().getInt("max_regions");
+        } else {
+            MAX_REGIONS = 15;
+            getConfig().set("max_regions", MAX_REGIONS);
         }
         
         saveConfig();

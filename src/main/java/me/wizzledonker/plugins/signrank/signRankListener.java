@@ -64,6 +64,11 @@ public class signRankListener implements Listener {
                 player.sendMessage(ChatColor.RED + "The fence around this lot isn't enclosed. Find another. Notify a mod too!");
                 return;
             }
+            int numRegions = signRank.worldGuard.getRegionManager(signblock.getWorld()).getRegionCountOfPlayer(signRank.worldGuard.wrapPlayer(player));
+            if (numRegions > plugin.MAX_REGIONS) {
+                player.sendMessage(ChatColor.RED + "You own too many lots. You'll have to sell one.");
+                return;
+            }
             if (lottype.isEmpty()) {
                 OfflinePlayer playerTo = plugin.getServer().getOfflinePlayer(signblock.getLine(3));
                 signRank.economy.depositPlayer(playerTo, value);
