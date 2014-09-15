@@ -11,6 +11,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Sign;
@@ -51,21 +52,34 @@ public class signRankListener implements Listener {
             }
             Sign signblock = ((Sign) block.getState());
             String lottype = signblock.getLine(1);
-            if (signRank.economy.getBalance(player) < plugin.determineValue(lottype)) {
-                player.sendMessage(ChatColor.RED + "You do not have enough money to purchase that lot!");
+            double value = plugin.determineValue(lottype);
+            if (lottype.isEmpty()) {
+                value = Double.parseDouble(signblock.getLine(2));
+            }
+            if (signRank.economy.getBalance(player) < value) {
+                player.sendMessage(ChatColor.RED + "You do not have enough money! It costs " + ChatColor.WHITE + signRank.economy.format(value));
                 return;
             }
             if (!plugin.lots.setupWorldguardRegion(block, player.getName())) {
                 player.sendMessage(ChatColor.RED + "The fence around this lot isn't enclosed. Find another. Notify a mod too!");
                 return;
             }
-            plugin.ChargeAndPromote(player, plugin.determineValue(lottype), player.getWorld().getName());
+            if (lottype.isEmpty()) {
+                OfflinePlayer playerTo = plugin.getServer().getOfflinePlayer(signblock.getLine(3));
+                signRank.economy.depositPlayer(playerTo, value);
+                if (playerTo.getPlayer() != null) {
+                    playerTo.getPlayer().sendMessage(ChatColor.GREEN + "Your lot has been sold, you have received " +ChatColor.WHITE+ signRank.economy.format(value));
+                }
+                
+            }
             signblock.setLine(0, player.getName() + "'s");
             signblock.setLine(1, lottype + " lot");
             signblock.setLine(2, "");
             signblock.setLine(3, "");
             signblock.update(true);
-            plugin.getServer().broadcastMessage(ChatColor.GREEN + player.getName() + " has bought a " + lottype + " lot!");
+            plugin.getServer().broadcastMessage(ChatColor.GREEN + player.getName() + " has bought a" +
+                    (lottype.isEmpty() ? "" : " "+lottype) + " lot!");
+            plugin.ChargeAndPromote(player, value, player.getWorld().getName());
         }
     }
     
@@ -112,18 +126,35 @@ public class signRankListener implements Listener {
                 if (!plugin.IGNORE_REGIONS.contains(region.getId()) && !plugin.FACTION_REGIONS.contains(region.getId())) {
                     boolean isOwner = region.isOwner(player.getName());
                     if (player.hasPermission("SignRank.sell") || isOwner) {
-                        event.setLine(0, "[lot]");
-                        event.setLine(1, plugin.determineLotType(region));
-                        signRank.economy.depositPlayer(player, plugin.determineValue(plugin.determineLotType(region)));
-                        signRank.worldGuard.getRegionManager(event.getBlock().getWorld()).removeRegion(region.getId());
-                        try {
-                            signRank.worldGuard.getRegionManager(event.getBlock().getWorld()).save();
-                        } catch (ProtectionDatabaseException ex) {
-                            Logger.getLogger(signRankListener.class.getName()).log(Level.SEVERE, null, ex);
+                        if (!event.getLine(2).isEmpty()) {
+                            if (plugin.lots.canBeWorldguardRegion(event.getBlock())) {
+                                try {
+                                    //Make the sign more yummy for selling
+                                    double price = Double.parseDouble(event.getLine(2));
+                                    event.setLine(3, player.getName());
+                                    event.setLine(1, Double.toString(price));
+                                    event.setLine(0, "[lot]");
+
+                                    //Remove the protection around the lot
+                                    signRank.worldGuard.getRegionManager(event.getBlock().getWorld()).removeRegion(region.getId());
+                                    try {
+                                        signRank.worldGuard.getRegionManager(event.getBlock().getWorld()).save();
+                                    } catch (ProtectionDatabaseException ex) {
+                                        Logger.getLogger(signRankListener.class.getName()).log(Level.SEVERE, null, ex);
+                                    }
+
+                                    //Do the honours to the player
+                                    player.sendMessage(ChatColor.GREEN + "This lot is now on the market for " + ChatColor.WHITE + signRank.economy.format(price));
+                                } catch (NumberFormatException ex) {
+                                    player.sendMessage(ChatColor.RED + "Make sure your sign has a price on the third line.");
+                                }
+                                return;
+                            } else {
+                                player.sendMessage(ChatColor.RED + "Please enclose your lot with a fence before selling, and put the sign on top of the fence");
+                            }
+                        } else {
+                            player.sendMessage(ChatColor.RED + "Make sure your sign has a price on the third line.");
                         }
-                        player.sendMessage(ChatColor.GREEN + "You have sold this lot and recieved " + ChatColor.WHITE + plugin.determineValue(plugin.determineLotType(region)) + signRank.economy.currencyNameSingular());
-                        plugin.scores.subtractScore(plugin.getConfig().getInt("lot_score", 100), player);
-                        return;
                     }
                 }
             }

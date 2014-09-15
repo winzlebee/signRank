@@ -5,15 +5,11 @@
 package me.wizzledonker.plugins.signrank;
 
 import com.sk89q.worldedit.BlockVector;
-import com.sk89q.worldedit.Vector;
 import com.sk89q.worldguard.domains.DefaultDomain;
 import com.sk89q.worldguard.protection.databases.ProtectionDatabaseException;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
-import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bukkit.Location;
@@ -37,8 +33,7 @@ public class signRankLots {
     //The faces to be used when checking
     BlockFace[] faces = { BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST, BlockFace.UP, BlockFace.DOWN };
     
-    public boolean setupWorldguardRegion(Block signBlock, String owner) {
-        
+    public boolean canBeWorldguardRegion(Block signBlock) {
         this.fences.clear();
         
         Block last = signBlock;
@@ -74,6 +69,14 @@ public class signRankLots {
           this.fences.clear();
           return false;
         }
+        return true;
+    }
+    
+    public boolean setupWorldguardRegion(Block signBlock, String owner) {
+        
+        if (!canBeWorldguardRegion(signBlock)) {
+            return false;
+        }
         String id = owner + "lot";
         if (signRank.worldGuard.getRegionManager(signBlock.getWorld()).hasRegion(id)) {
             for (int i = 1; i > 0; i++) {
@@ -92,7 +95,7 @@ public class signRankLots {
         try {
             signRank.worldGuard.getRegionManager(signBlock.getWorld()).save();
         } catch (ProtectionDatabaseException ex) {
-            Logger.getLogger(signRankLots.class.getName()).log(Level.SEVERE, null, ex);
+            plugin.getLogger().log(Level.WARNING, ex.toString());
         }
         return true;
     }
@@ -114,7 +117,7 @@ public class signRankLots {
             }
         }
         Location end = result.getLocation();
-        end.setY(0);
+        end.setY(end.getBlockY()-(plugin.PROTECT_DISTANCE));
         return end;
     }
     

@@ -28,6 +28,8 @@ public class signRank extends JavaPlugin {
     public List<String> IGNORE_REGIONS;
     public List<String> FACTION_REGIONS;
     
+    public int PROTECT_DISTANCE;
+    
     public static Economy economy = null;
     public static Permission permission = null;
     public static WorldGuardPlugin worldGuard = null;
@@ -75,6 +77,14 @@ public class signRank extends JavaPlugin {
             getConfig().set("faction_regions", FACTION_REGIONS);
         }
         
+        //Distance underground the protection will reach
+        if (getConfig().isInt("protect_distance")) {
+            PROTECT_DISTANCE = getConfig().getInt("protect_distance");
+        } else {
+            PROTECT_DISTANCE = 3;
+            getConfig().set("protect_distance", PROTECT_DISTANCE);
+        }
+        
         saveConfig();
         
         PROTECT_BLOCK_TYPES = getConfig().getIntegerList("protect_blocks");
@@ -88,24 +98,13 @@ public class signRank extends JavaPlugin {
     }
     
     public double determineValue(String type) {
-        double price = 500.00;
-        price = getConfig().getDouble("lot_prices." + type + ".price");
-        return price;
-    }
-    
-    public String determineLotType(ProtectedRegion region) {
-        int size = Math.abs(region.getMaximumPoint().getBlockX() - region.getMinimumPoint().getBlockX())*Math.abs(region.getMaximumPoint().getBlockZ() - region.getMinimumPoint().getBlockZ());
-        String selection = getSmallestLot();
-        String prev = getSmallestLot();
-        for (String current : getConfig().getConfigurationSection("lot_prices").getKeys(false)) {
-            if ((getConfig().getInt("lot_prices." + prev + ".size") < size) && (getConfig().getInt("lot_prices." + current + ".size") > size)) {
-                if (getConfig().getInt("lot_prices." + selection + ".size") > getConfig().getInt("lot_prices." + current + ".size")) {
-                    selection = current;
-                }
-            }
+        double price = getConfig().getDouble("lot_prices." + type + ".price");
+        
+        if (price <= 0) {
+            price = getConfig().getDouble("lot_prices.default.price");
         }
-        this.getServer().getLogger().log(Level.INFO, "A lot was sold of size {0} as {1}", new Object[]{size, selection});
-        return selection;
+        
+        return price;
     }
     
     public String getSmallestLot() {
@@ -120,6 +119,8 @@ public class signRank extends JavaPlugin {
     
     public void ChargeAndPromote(Player player, Double amount, String world) {
         economy.withdrawPlayer(player, amount);
+        player.performCommand("sethome");
+        scores.addScore(getConfig().getInt("lot_score", 100), player);
         //Find the WorldGuard region
         if (!player.hasPermission("SignRank.exempt")) {
             RegionManager rm = worldGuard.getRegionManager(player.getWorld());
@@ -128,16 +129,14 @@ public class signRank extends JavaPlugin {
             for (ProtectedRegion region : set) {
                 //Analyse all the regions and find the lowest priority
                 if (!IGNORE_REGIONS.contains(region.getId())) {
-                    rank = region.getOwners().getGroups().iterator().next();
+                    if (region.getOwners().getGroups().iterator().hasNext()) {
+                        rank = region.getOwners().getGroups().iterator().next();
+                    }
                 }
             }
-           for (String group : permission.getPlayerGroups(player)) {
-               permission.playerRemoveGroup(player, group);
-           }
-           permission.playerAddGroup(player, rank);
+           this.getServer().dispatchCommand(this.getServer().getConsoleSender(), "permissions player setgroup "+player.getUniqueId().toString()+" "+rank);
         }
-        player.performCommand("sethome");
-        scores.addScore(getConfig().getInt("lot_score", 100), player);
+
     }
     
     private Boolean setupEconomy() {
