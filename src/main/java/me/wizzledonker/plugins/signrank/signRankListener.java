@@ -137,7 +137,8 @@ public class signRankListener implements Listener {
                                     //Make the sign more yummy for selling
                                     double price = Double.parseDouble(event.getLine(2));
                                     event.setLine(3, player.getName());
-                                    event.setLine(1, Double.toString(price));
+                                    event.setLine(1, "");
+                                    event.setLine(2, Double.toString(price));
                                     event.setLine(0, "[lot]");
 
                                     //Remove the protection around the lot
@@ -156,9 +157,11 @@ public class signRankListener implements Listener {
                                 return;
                             } else {
                                 player.sendMessage(ChatColor.RED + "Please enclose your lot with a fence before selling, and put the sign on top of the fence");
+                                return;
                             }
                         } else {
                             player.sendMessage(ChatColor.RED + "Make sure your sign has a price on the third line.");
+                            return;
                         }
                     }
                 }
