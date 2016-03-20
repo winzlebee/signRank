@@ -130,7 +130,7 @@ public class signRankLots {
             }
         }
         Location end = result.getLocation();
-        end.setY(256);
+        end.setY(plugin.PROTECT_HEIGHT);
         return end;
     }
     

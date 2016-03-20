@@ -4,10 +4,8 @@ import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Level;
 import me.wizzledonker.plugins.oblicomranks.OblicomRankScore;
 import me.wizzledonker.plugins.oblicomranks.OblicomRanks;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -29,6 +27,7 @@ public class signRank extends JavaPlugin {
     public List<String> FACTION_REGIONS;
     
     public int PROTECT_DISTANCE;
+    public int PROTECT_HEIGHT;
     public int MAX_REGIONS;
     
     public static Economy economy = null;
@@ -84,6 +83,14 @@ public class signRank extends JavaPlugin {
         } else {
             PROTECT_DISTANCE = 3;
             getConfig().set("protect_distance", PROTECT_DISTANCE);
+        }
+        
+        //Distance above ground protection will reach
+        if (getConfig().isInt("protect_height")) {
+            PROTECT_DISTANCE = getConfig().getInt("protect_height");
+        } else {
+            PROTECT_HEIGHT = 256;
+            getConfig().set("protect_distance", PROTECT_HEIGHT);
         }
         
         if (getConfig().isInt("max_regions")) {

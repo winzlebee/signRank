@@ -4,6 +4,7 @@
  */
 package me.wizzledonker.plugins.signrank;
 
+import com.sk89q.worldguard.LocalPlayer;
 import com.sk89q.worldguard.domains.DefaultDomain;
 import com.sk89q.worldguard.protection.managers.storage.StorageException;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
@@ -95,7 +96,7 @@ public class signRankListener implements Listener {
             if (signRank.worldGuard.getRegionManager(player.getWorld()).getApplicableRegions(event.getBlock().getLocation()).iterator().hasNext()) {
                 ProtectedRegion region = signRank.worldGuard.getRegionManager(player.getWorld()).getApplicableRegions(event.getBlock().getLocation()).iterator().next();
                 if (!plugin.IGNORE_REGIONS.contains(region.getId()) && !plugin.FACTION_REGIONS.contains(region.getId())) {
-                    boolean isOwner = region.isOwner(player.getName());
+                    boolean isOwner = region.isOwner((LocalPlayer) player);
 
                     if (player.hasPermission("SignRank.update") || isOwner) {
                         for (int i = 1 ; i < event.getLines().length ; i++) {
@@ -129,7 +130,7 @@ public class signRankListener implements Listener {
             if (signRank.worldGuard.getRegionManager(player.getWorld()).getApplicableRegions(event.getBlock().getLocation()).iterator().hasNext()) {
                 ProtectedRegion region = signRank.worldGuard.getRegionManager(player.getWorld()).getApplicableRegions(event.getBlock().getLocation()).iterator().next();
                 if (!plugin.IGNORE_REGIONS.contains(region.getId()) && !plugin.FACTION_REGIONS.contains(region.getId())) {
-                    boolean isOwner = region.isOwner(player.getName());
+                    boolean isOwner = region.isOwner((LocalPlayer) player);
                     if (player.hasPermission("SignRank.sell") || isOwner) {
                         if (!event.getLine(2).isEmpty()) {
                             if (plugin.lots.canBeWorldguardRegion(event.getBlock())) {
