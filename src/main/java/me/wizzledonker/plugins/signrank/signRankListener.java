@@ -5,7 +5,7 @@
 package me.wizzledonker.plugins.signrank;
 
 import com.sk89q.worldguard.domains.DefaultDomain;
-import com.sk89q.worldguard.protection.databases.ProtectionDatabaseException;
+import com.sk89q.worldguard.protection.managers.storage.StorageException;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -106,7 +106,7 @@ public class signRankListener implements Listener {
                                 region.setOwners(owners);
                                 try {
                                     signRank.worldGuard.getRegionManager(player.getWorld()).save();
-                                } catch (ProtectionDatabaseException ex) {
+                                } catch (StorageException ex) {
                                     Logger.getLogger(signRankListener.class.getName()).log(Level.SEVERE, null, ex);
                                 }
                                 player.sendMessage(line + ChatColor.GREEN + " Added");
@@ -145,7 +145,7 @@ public class signRankListener implements Listener {
                                     signRank.worldGuard.getRegionManager(event.getBlock().getWorld()).removeRegion(region.getId());
                                     try {
                                         signRank.worldGuard.getRegionManager(event.getBlock().getWorld()).save();
-                                    } catch (ProtectionDatabaseException ex) {
+                                    } catch (StorageException ex) {
                                         Logger.getLogger(signRankListener.class.getName()).log(Level.SEVERE, null, ex);
                                     }
 

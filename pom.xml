@@ -4,20 +4,6 @@
     <artifactId>signRank</artifactId>
     <version>1.2</version>
     <name>signRank</name>
-   <repositories>
-        <repository>
-            <id>bukkit-repo</id>
-            <url>http://repo.bukkit.org/content/groups/public/</url>
-        </repository>
-        <repository>
-            <id>vault-repo</id>
-            <url>http://nexus.theyeticave.net/content/repositories/pub_releases</url>
-        </repository>
-        <repository>
-            <id>sk89q-repo</id>
-            <url>http://maven.sk89q.com/repo/</url>
-        </repository>
-    </repositories>
     <build>
         <plugins>
             <plugin>
@@ -31,29 +17,49 @@
             </plugin>
         </plugins>
     </build>
-    <dependencies>
-        <dependency>
-            <groupId>com.sk89q</groupId>
-            <artifactId>worldguard</artifactId>
-            <version>5.9.1-SNAPSHOT</version>
-            <scope>compile</scope>
-            <type>jar</type>
-        </dependency>
+   <dependencies>
         <dependency>
             <groupId>org.bukkit</groupId>
             <artifactId>bukkit</artifactId>
-            <version>1.7.10-R0.1-SNAPSHOT</version>
+            <version>1.9-R0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>net.milkbowl.vault</groupId>
-            <artifactId>Vault</artifactId>
-            <version>1.4.1</version>
+            <artifactId>VaultAPI</artifactId>
+            <version>1.5</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.spigotmc</groupId>
+          <artifactId>spigot-api</artifactId>
+          <version>1.9-R0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>me.wizzledonker.plugins.oblicomranks</groupId>
             <artifactId>oblicomRanks</artifactId>
             <version>1.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.sk89q</groupId>
+            <artifactId>worldguard</artifactId>
+            <version>6.0.0-beta-01</version>
+            <scope>compile</scope>
+            <type>jar</type>
+        </dependency>
     </dependencies>
+    <repositories>
+        <repository>
+            <id>spigot-repo</id>
+            <url>https://hub.spigotmc.org/nexus/content/groups/public/</url>
+        </repository>
+        <!-- Repo for Multiverse-Core Dependency -->
+        <repository>
+            <id>vault-repo</id>
+            <url>http://nexus.theyeticave.net/content/repositories/pub_releases</url>
+        </repository>
+        <repository>
+            <id>sk89q-repo</id>
+            <url>http://maven.sk89q.com/repo/</url>
+        </repository>
+    </repositories>
 </project>
