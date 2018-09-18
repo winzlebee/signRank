@@ -87,10 +87,10 @@ public class signRank extends JavaPlugin {
         
         //Distance above ground protection will reach
         if (getConfig().isInt("protect_height")) {
-            PROTECT_DISTANCE = getConfig().getInt("protect_height");
+            PROTECT_HEIGHT = getConfig().getInt("protect_height");
         } else {
             PROTECT_HEIGHT = 256;
-            getConfig().set("protect_distance", PROTECT_HEIGHT);
+            getConfig().set("protect_height", PROTECT_HEIGHT);
         }
         
         if (getConfig().isInt("max_regions")) {
@@ -135,12 +135,11 @@ public class signRank extends JavaPlugin {
     public void ChargeAndPromote(Player player, Double amount, String world) {
         economy.withdrawPlayer(player, amount);
         player.performCommand("sethome");
-        scores.addScore(getConfig().getInt("lot_score", 100), player);
         //Find the WorldGuard region
         if (!player.hasPermission("SignRank.exempt")) {
             RegionManager rm = worldGuard.getRegionManager(player.getWorld());
             ApplicableRegionSet set = rm.getApplicableRegions(player.getLocation());
-            String rank = "citizen";
+            String rank = "";
             for (ProtectedRegion region : set) {
                 //Analyse all the regions and find the lowest priority
                 if (!IGNORE_REGIONS.contains(region.getId())) {
@@ -149,7 +148,10 @@ public class signRank extends JavaPlugin {
                     }
                 }
             }
-           this.getServer().dispatchCommand(this.getServer().getConsoleSender(), "permissions player setgroup "+player.getUniqueId().toString()+" "+rank);
+            if (!rank.isEmpty()) {
+                this.getServer().dispatchCommand(this.getServer().getConsoleSender(), "pex user " + player.getName() + " group set "+rank);
+            }
+           scores.addScore(getConfig().getInt("lot_score", 100), player);
         }
 
     }
