@@ -7,15 +7,12 @@ package me.wizzledonker.plugins.signrank;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.extension.platform.AbstractPlayerActor;
 import com.sk89q.worldguard.LocalPlayer;
-import com.sk89q.worldguard.bukkit.ProtectionQuery;
 import com.sk89q.worldguard.domains.DefaultDomain;
-import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.managers.storage.StorageException;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bukkit.ChatColor;
-import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -49,18 +46,23 @@ public class signRankListener implements Listener {
                 return;
             }
             Block block = event.getClickedBlock();
-            if (!block.getType().equals(Material.SIGN)) {
+
+            // Check if we're dealing with a sign
+            if (!(block.getState() instanceof Sign)) {
                 return;
             }
+
             if (!((Sign) block.getState()).getLine(0).toLowerCase().contains("[lot]")) {
                 return;
             }
+
             Sign signblock = ((Sign) block.getState());
             String lottype = signblock.getLine(1);
             double value = plugin.determineValue(lottype);
             if (lottype.isEmpty()) {
                 value = Double.parseDouble(signblock.getLine(2));
             }
+
             if (signRank.economy.getBalance(player) < value) {
                 player.sendMessage(ChatColor.RED + "You do not have enough money! It costs " + ChatColor.WHITE + signRank.economy.format(value));
                 return;
@@ -78,6 +80,7 @@ public class signRankListener implements Listener {
                 return;
             }
             if (lottype.isEmpty()) {
+                // TODO: Change this to instead store player UUIDs in a config file then look them up.
                 OfflinePlayer playerTo = plugin.getServer().getOfflinePlayer(signblock.getLine(3));
                 signRank.economy.depositPlayer(playerTo, value);
                 if (playerTo.getPlayer() != null) {
@@ -100,8 +103,8 @@ public class signRankListener implements Listener {
     public void onSignChange(SignChangeEvent event) {
         Player player = event.getPlayer();
         if (event.getLine(0).toLowerCase().contains("[update]")) {
-            if (signRank.worldGuard.getRegionContainer().get(BukkitAdapter.adapt(player.getWorld())).getApplicableRegions(BukkitAdapter.asVector(event.getBlock().getLocation())).iterator().hasNext()) {
-                ProtectedRegion region = signRank.worldGuard.getRegionContainer().get(BukkitAdapter.adapt(player.getWorld())).getApplicableRegions(BukkitAdapter.asVector(event.getBlock().getLocation())).iterator().next();
+            if (signRank.worldGuard.getRegionContainer().get(BukkitAdapter.adapt(player.getWorld())).getApplicableRegions(BukkitAdapter.asBlockVector(event.getBlock().getLocation())).iterator().hasNext()) {
+                ProtectedRegion region = signRank.worldGuard.getRegionContainer().get(BukkitAdapter.adapt(player.getWorld())).getApplicableRegions(BukkitAdapter.asBlockVector(event.getBlock().getLocation())).iterator().next();
                 if (!plugin.IGNORE_REGIONS.contains(region.getId())) {
                     AbstractPlayerActor wgPlayer = (AbstractPlayerActor) BukkitAdapter.adapt(player);
                     boolean isOwner = region.isOwner((LocalPlayer) wgPlayer);
@@ -135,8 +138,8 @@ public class signRankListener implements Listener {
             return;
         }
         if (event.getLine(0).toLowerCase().contains("[sell]")) {
-            if (signRank.worldGuard.getRegionContainer().get(BukkitAdapter.adapt(player.getWorld())).getApplicableRegions(BukkitAdapter.asVector(event.getBlock().getLocation())).iterator().hasNext()) {
-                ProtectedRegion region = signRank.worldGuard.getRegionContainer().get(BukkitAdapter.adapt(player.getWorld())).getApplicableRegions(BukkitAdapter.asVector(event.getBlock().getLocation())).iterator().next();
+            if (signRank.worldGuard.getRegionContainer().get(BukkitAdapter.adapt(player.getWorld())).getApplicableRegions(BukkitAdapter.asBlockVector(event.getBlock().getLocation())).iterator().hasNext()) {
+                ProtectedRegion region = signRank.worldGuard.getRegionContainer().get(BukkitAdapter.adapt(player.getWorld())).getApplicableRegions(BukkitAdapter.asBlockVector(event.getBlock().getLocation())).iterator().next();
                 if (!plugin.IGNORE_REGIONS.contains(region.getId())) {
                     AbstractPlayerActor wgPlayer = (AbstractPlayerActor) BukkitAdapter.adapt(player);
                     boolean isOwner = region.isOwner((LocalPlayer) wgPlayer);
@@ -190,13 +193,16 @@ public class signRankListener implements Listener {
     
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
+
+        // Deny breaking lot signs
         Sign signBlock = null;
-        if (event.getBlock().getType().equals(Material.SIGN)) {
+        if (event.getBlock().getState() instanceof Sign) {
             signBlock = (Sign) event.getBlock().getState();
         }
-        if (event.getBlock().getRelative(BlockFace.UP).getType().equals(Material.SIGN)) {
+        if (event.getBlock().getRelative(BlockFace.UP).getState() instanceof Sign) {
             signBlock = (Sign) event.getBlock().getRelative(BlockFace.UP).getState();
         }
+
         if (signBlock != null) {
             if (signBlock.getLine(0).toLowerCase().contains("[lot]")) {
                 if (!event.getPlayer().hasPermission("SignRank.create")) {
@@ -206,8 +212,8 @@ public class signRankListener implements Listener {
             }
             if (signBlock.getLine(0).toLowerCase().contains("[update]")) {
                 Player player = event.getPlayer();
-                if (signRank.worldGuard.getRegionContainer().get(BukkitAdapter.adapt(player.getWorld())).getApplicableRegions(BukkitAdapter.asVector(event.getBlock().getLocation())).iterator().hasNext()) {
-                    ProtectedRegion region = signRank.worldGuard.getRegionContainer().get(BukkitAdapter.adapt(player.getWorld())).getApplicableRegions(BukkitAdapter.asVector(event.getBlock().getLocation())).iterator().next();
+                if (signRank.worldGuard.getRegionContainer().get(BukkitAdapter.adapt(player.getWorld())).getApplicableRegions(BukkitAdapter.asBlockVector(event.getBlock().getLocation())).iterator().hasNext()) {
+                    ProtectedRegion region = signRank.worldGuard.getRegionContainer().get(BukkitAdapter.adapt(player.getWorld())).getApplicableRegions(BukkitAdapter.asBlockVector(event.getBlock().getLocation())).iterator().next();
                     if (!plugin.IGNORE_REGIONS.contains(region.getId())) {
                         AbstractPlayerActor wgPlayer = (AbstractPlayerActor) BukkitAdapter.adapt(player);
                         boolean isOwner = region.isOwner((LocalPlayer) wgPlayer);

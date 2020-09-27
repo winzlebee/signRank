@@ -4,14 +4,11 @@
  */
 package me.wizzledonker.plugins.signrank;
 
-import com.sk89q.worldedit.BlockVector;
+import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
-import com.sk89q.worldedit.world.World;
-import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.domains.DefaultDomain;
 import com.sk89q.worldguard.protection.managers.storage.StorageException;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
-import com.sk89q.worldguard.protection.regions.RegionContainer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -108,8 +105,9 @@ public class signRankLots {
         return fences.size();
     }
     
-    private BlockVector blockVectorFromLoc(Location loc) {
-        return new BlockVector(loc.getX(), loc.getY(), loc.getZ());
+    private BlockVector3 blockVectorFromLoc(Location loc) {
+        
+        return BlockVector3.at(loc.getX(), loc.getY(), loc.getZ());
     }
     
     private Location getPrimaryLoc() {
