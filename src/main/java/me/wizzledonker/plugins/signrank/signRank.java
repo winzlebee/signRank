@@ -1,18 +1,14 @@
 package me.wizzledonker.plugins.signrank;
 
+import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
-import com.sk89q.worldguard.protection.ApplicableRegionSet;
-import com.sk89q.worldguard.protection.managers.RegionManager;
-import com.sk89q.worldguard.protection.regions.ProtectedRegion;
+import com.sk89q.worldguard.internal.platform.WorldGuardPlatform;
 import java.util.Arrays;
 import java.util.List;
-import me.wizzledonker.plugins.oblicomranks.OblicomRankScore;
-import me.wizzledonker.plugins.oblicomranks.OblicomRanks;
 import org.bukkit.plugin.java.JavaPlugin;
 
 //Importing milkbowl api
 import net.milkbowl.vault.economy.Economy;
-import net.milkbowl.vault.permission.Permission;
 
 //Other Imports
 import org.bukkit.entity.Player;
@@ -22,7 +18,7 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
 
 public class signRank extends JavaPlugin {
-    public List<Integer> PROTECT_BLOCK_TYPES;
+    public List<String> PROTECT_BLOCK_TYPES;
     public List<String> IGNORE_REGIONS;
     public List<String> FACTION_REGIONS;
     
@@ -31,10 +27,7 @@ public class signRank extends JavaPlugin {
     public int MAX_REGIONS;
     
     public static Economy economy = null;
-    public static Permission permission = null;
-    public static WorldGuardPlugin worldGuard = null;
-    
-    public OblicomRankScore scores = null;
+    public static WorldGuardPlatform worldGuard = null;
     
     Listener mainListener = new signRankListener(this);
     public signRankLots lots = null;
@@ -43,10 +36,10 @@ public class signRank extends JavaPlugin {
     public void onEnable() {
         PluginManager pm = this.getServer().getPluginManager();
         worldGuard = getWorldGuard();
-        if (setupEconomy() && setupPermission() && setupRanks() && (worldGuard != null)) {
-            System.out.println(getPluginName() + " permission + economy + protection system successfully loaded! Permissions: " + permission.getName() + "Economy: " + economy.getName());
+        if (setupEconomy() && (worldGuard != null)) {
+            System.out.println(getPluginName() + " economy + protection system successfully loaded! Economy: " + economy.getName());
         } else {
-            System.out.println(getPluginName() + " Failed to initialise permissions/economy/worldguard via vault. Disabling...");
+            System.out.println(getPluginName() + " Failed to initialise economy/worldguard via vault. Disabling...");
             pm.disablePlugin(this);
             return;
         }
@@ -55,9 +48,9 @@ public class signRank extends JavaPlugin {
         
         //Materials the fence may be created from
         if (!getConfig().getIntegerList("protect_blocks").isEmpty()) {
-            PROTECT_BLOCK_TYPES = getConfig().getIntegerList("protect_blocks");
+            PROTECT_BLOCK_TYPES = getConfig().getStringList("protect_blocks");
         } else {
-            PROTECT_BLOCK_TYPES = Arrays.asList(85, 107);
+            PROTECT_BLOCK_TYPES = Arrays.asList("OAK_FENCE", "OAK_FENCE_GATE");
             getConfig().set("protect_blocks", PROTECT_BLOCK_TYPES);
         }
         
@@ -67,14 +60,6 @@ public class signRank extends JavaPlugin {
         } else {
             IGNORE_REGIONS = Arrays.asList("city", "shops");
             getConfig().set("ignore_regions", IGNORE_REGIONS);
-        }
-        
-        //Regions which will result in a change of group when a lot is purchased
-        if (!getConfig().getStringList("faction_regions").isEmpty()) {
-            FACTION_REGIONS = getConfig().getStringList("faction_regions");
-        } else {
-            FACTION_REGIONS = Arrays.asList("police", "criminals");
-            getConfig().set("faction_regions", FACTION_REGIONS);
         }
         
         //Distance underground the protection will reach
@@ -102,7 +87,7 @@ public class signRank extends JavaPlugin {
         
         saveConfig();
         
-        PROTECT_BLOCK_TYPES = getConfig().getIntegerList("protect_blocks");
+        PROTECT_BLOCK_TYPES = getConfig().getStringList("protect_blocks");
         pm.registerEvents(mainListener, this);
         System.out.println(getPluginName() + " for oblicom.com successfully started");
     }
@@ -134,9 +119,11 @@ public class signRank extends JavaPlugin {
     
     public void ChargeAndPromote(Player player, Double amount, String world) {
         economy.withdrawPlayer(player, amount);
-        player.performCommand("sethome");
+        //player.performCommand("sethome"); Leave this up to the player
         //Find the WorldGuard region
-        if (!player.hasPermission("SignRank.exempt")) {
+        
+        //The below code is legacy code from when the player was promoted
+        /* if (!player.hasPermission("SignRank.exempt")) {
             RegionManager rm = worldGuard.getRegionManager(player.getWorld());
             ApplicableRegionSet set = rm.getApplicableRegions(player.getLocation());
             String rank = "";
@@ -151,8 +138,7 @@ public class signRank extends JavaPlugin {
             if (!rank.isEmpty()) {
                 this.getServer().dispatchCommand(this.getServer().getConsoleSender(), "pex user " + player.getName() + " group set "+rank);
             }
-           scores.addScore(getConfig().getInt("lot_score", 100), player);
-        }
+        }*/
 
     }
     
@@ -165,30 +151,11 @@ public class signRank extends JavaPlugin {
         return (economy != null);
     }
     
-    private Boolean setupPermission() {
-        RegisteredServiceProvider<Permission> permissionProvider = getServer().getServicesManager().getRegistration(net.milkbowl.vault.permission.Permission.class);
-        if (permissionProvider != null) {
-            permission = permissionProvider .getProvider();
-        }
-
-        return (permission != null);
-    }
-    
     private String getPluginName() {
         return "[" + this + "]";
     }
     
-    private boolean setupRanks() {
-        Plugin pl = getServer().getPluginManager().getPlugin("oblicomRanks");
-        if (pl == null) {
-            return false;
-        }
-        OblicomRanks oblicomRanks = (OblicomRanks) pl;
-        scores = oblicomRanks.score;
-        return (scores != null);
-    }
-    
-    private WorldGuardPlugin getWorldGuard() {
+    private WorldGuardPlatform getWorldGuard() {
         Plugin plugin = getServer().getPluginManager().getPlugin("WorldGuard");
 
         // WorldGuard may not be loaded
@@ -196,6 +163,6 @@ public class signRank extends JavaPlugin {
             return null; // Maybe you want throw an exception instead
         }
 
-        return (WorldGuardPlugin) plugin;
+        return WorldGuard.getInstance().getPlatform();
     }
 }

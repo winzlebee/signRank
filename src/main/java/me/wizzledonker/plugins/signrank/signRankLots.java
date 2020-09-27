@@ -5,13 +5,16 @@
 package me.wizzledonker.plugins.signrank;
 
 import com.sk89q.worldedit.BlockVector;
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldedit.world.World;
+import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.domains.DefaultDomain;
 import com.sk89q.worldguard.protection.managers.storage.StorageException;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
+import com.sk89q.worldguard.protection.regions.RegionContainer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -47,7 +50,7 @@ public class signRankLots {
                 //Make sure it isn't the same as the last cycle
                 if ((last.getX() == signBlock.getX()) && (last.getY() == signBlock.getY()) && (last.getZ() == signBlock.getZ()))
                     continue;
-                if (plugin.PROTECT_BLOCK_TYPES.contains(signBlock.getTypeId())) {
+                if (plugin.PROTECT_BLOCK_TYPES.contains(signBlock.getType().toString())) {
                     this.found = true;
                     last = check;
                     check = signBlock;
@@ -78,22 +81,23 @@ public class signRankLots {
             return false;
         }
         String id = owner + "lot";
-        if (signRank.worldGuard.getRegionManager(signBlock.getWorld()).hasRegion(id)) {
+        if (signRank.worldGuard.getRegionContainer().get(BukkitAdapter.adapt(signBlock.getWorld())).hasRegion(id)) {
             for (int i = 1; i > 0; i++) {
-                if (!signRank.worldGuard.getRegionManager(signBlock.getWorld()).hasRegion(id + i)) {
+                if (!signRank.worldGuard.getRegionContainer().get(BukkitAdapter.adapt(signBlock.getWorld())).hasRegion(id + i)) {
                     id = id + i;
                     break;
                 }
             }
         }
+        
         ProtectedCuboidRegion region = new ProtectedCuboidRegion(id, blockVectorFromLoc(getPrimaryLoc()), blockVectorFromLoc(getSecondaryLoc()));
         region.setPriority(2);
         DefaultDomain owners = new DefaultDomain();
         owners.addPlayer(owner);
         region.setOwners(owners);
-        signRank.worldGuard.getRegionManager(signBlock.getWorld()).addRegion(region);
+        signRank.worldGuard.getRegionContainer().get(BukkitAdapter.adapt(signBlock.getWorld())).addRegion(region);
         try {
-            signRank.worldGuard.getRegionManager(signBlock.getWorld()).save();
+            signRank.worldGuard.getRegionContainer().get(BukkitAdapter.adapt(signBlock.getWorld())).save();
         } catch (StorageException ex) {
             plugin.getLogger().log(Level.WARNING, ex.toString());
         }

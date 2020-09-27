@@ -4,8 +4,12 @@
  */
 package me.wizzledonker.plugins.signrank;
 
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldedit.extension.platform.AbstractPlayerActor;
 import com.sk89q.worldguard.LocalPlayer;
+import com.sk89q.worldguard.bukkit.ProtectionQuery;
 import com.sk89q.worldguard.domains.DefaultDomain;
+import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.managers.storage.StorageException;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import java.util.logging.Level;
@@ -45,7 +49,7 @@ public class signRankListener implements Listener {
                 return;
             }
             Block block = event.getClickedBlock();
-            if (!block.getType().equals(Material.SIGN_POST)) {
+            if (!block.getType().equals(Material.SIGN)) {
                 return;
             }
             if (!((Sign) block.getState()).getLine(0).toLowerCase().contains("[lot]")) {
@@ -65,7 +69,10 @@ public class signRankListener implements Listener {
                 player.sendMessage(ChatColor.RED + "The fence around this lot isn't enclosed. Find another. Notify a mod too!");
                 return;
             }
-            int numRegions = signRank.worldGuard.getRegionManager(signblock.getWorld()).getRegionCountOfPlayer(signRank.worldGuard.wrapPlayer(player));
+            
+            AbstractPlayerActor wgPlayer = (AbstractPlayerActor) BukkitAdapter.adapt(player);
+            
+            int numRegions = signRank.worldGuard.getRegionContainer().get(BukkitAdapter.adapt(signblock.getWorld())).getRegionCountOfPlayer((LocalPlayer) wgPlayer);
             if (numRegions > plugin.MAX_REGIONS) {
                 player.sendMessage(ChatColor.RED + "You own too many lots. You'll have to sell one.");
                 return;
@@ -93,10 +100,11 @@ public class signRankListener implements Listener {
     public void onSignChange(SignChangeEvent event) {
         Player player = event.getPlayer();
         if (event.getLine(0).toLowerCase().contains("[update]")) {
-            if (signRank.worldGuard.getRegionManager(player.getWorld()).getApplicableRegions(event.getBlock().getLocation()).iterator().hasNext()) {
-                ProtectedRegion region = signRank.worldGuard.getRegionManager(player.getWorld()).getApplicableRegions(event.getBlock().getLocation()).iterator().next();
-                if (!plugin.IGNORE_REGIONS.contains(region.getId()) && !plugin.FACTION_REGIONS.contains(region.getId())) {
-                    boolean isOwner = region.isOwner((LocalPlayer) player);
+            if (signRank.worldGuard.getRegionContainer().get(BukkitAdapter.adapt(player.getWorld())).getApplicableRegions(BukkitAdapter.asVector(event.getBlock().getLocation())).iterator().hasNext()) {
+                ProtectedRegion region = signRank.worldGuard.getRegionContainer().get(BukkitAdapter.adapt(player.getWorld())).getApplicableRegions(BukkitAdapter.asVector(event.getBlock().getLocation())).iterator().next();
+                if (!plugin.IGNORE_REGIONS.contains(region.getId())) {
+                    AbstractPlayerActor wgPlayer = (AbstractPlayerActor) BukkitAdapter.adapt(player);
+                    boolean isOwner = region.isOwner((LocalPlayer) wgPlayer);
 
                     if (player.hasPermission("SignRank.update") || isOwner) {
                         for (int i = 1 ; i < event.getLines().length ; i++) {
@@ -106,7 +114,7 @@ public class signRankListener implements Listener {
                                 owners.addPlayer(line);
                                 region.setOwners(owners);
                                 try {
-                                    signRank.worldGuard.getRegionManager(player.getWorld()).save();
+                                    signRank.worldGuard.getRegionContainer().get(BukkitAdapter.adapt(player.getWorld())).save();
                                 } catch (StorageException ex) {
                                     Logger.getLogger(signRankListener.class.getName()).log(Level.SEVERE, null, ex);
                                 }
@@ -127,10 +135,11 @@ public class signRankListener implements Listener {
             return;
         }
         if (event.getLine(0).toLowerCase().contains("[sell]")) {
-            if (signRank.worldGuard.getRegionManager(player.getWorld()).getApplicableRegions(event.getBlock().getLocation()).iterator().hasNext()) {
-                ProtectedRegion region = signRank.worldGuard.getRegionManager(player.getWorld()).getApplicableRegions(event.getBlock().getLocation()).iterator().next();
-                if (!plugin.IGNORE_REGIONS.contains(region.getId()) && !plugin.FACTION_REGIONS.contains(region.getId())) {
-                    boolean isOwner = region.isOwner((LocalPlayer) player);
+            if (signRank.worldGuard.getRegionContainer().get(BukkitAdapter.adapt(player.getWorld())).getApplicableRegions(BukkitAdapter.asVector(event.getBlock().getLocation())).iterator().hasNext()) {
+                ProtectedRegion region = signRank.worldGuard.getRegionContainer().get(BukkitAdapter.adapt(player.getWorld())).getApplicableRegions(BukkitAdapter.asVector(event.getBlock().getLocation())).iterator().next();
+                if (!plugin.IGNORE_REGIONS.contains(region.getId())) {
+                    AbstractPlayerActor wgPlayer = (AbstractPlayerActor) BukkitAdapter.adapt(player);
+                    boolean isOwner = region.isOwner((LocalPlayer) wgPlayer);
                     if (player.hasPermission("SignRank.sell") || isOwner) {
                         if (!event.getLine(2).isEmpty()) {
                             if (plugin.lots.canBeWorldguardRegion(event.getBlock())) {
@@ -139,13 +148,13 @@ public class signRankListener implements Listener {
                                     double price = Double.parseDouble(event.getLine(2));
                                     event.setLine(3, player.getName());
                                     event.setLine(1, "");
-                                    event.setLine(2, Double.toString(price));
+                                    event.setLine(2, "$" + Double.toString(price));
                                     event.setLine(0, "[lot]");
 
                                     //Remove the protection around the lot
-                                    signRank.worldGuard.getRegionManager(event.getBlock().getWorld()).removeRegion(region.getId());
+                                    signRank.worldGuard.getRegionContainer().get(BukkitAdapter.adapt(event.getBlock().getWorld())).removeRegion(region.getId());
                                     try {
-                                        signRank.worldGuard.getRegionManager(event.getBlock().getWorld()).save();
+                                        signRank.worldGuard.getRegionContainer().get(BukkitAdapter.adapt(event.getBlock().getWorld())).save();
                                     } catch (StorageException ex) {
                                         Logger.getLogger(signRankListener.class.getName()).log(Level.SEVERE, null, ex);
                                     }
@@ -182,10 +191,10 @@ public class signRankListener implements Listener {
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
         Sign signBlock = null;
-        if (event.getBlock().getType().equals(Material.SIGN_POST)) {
+        if (event.getBlock().getType().equals(Material.SIGN)) {
             signBlock = (Sign) event.getBlock().getState();
         }
-        if (event.getBlock().getRelative(BlockFace.UP).getType().equals(Material.SIGN_POST)) {
+        if (event.getBlock().getRelative(BlockFace.UP).getType().equals(Material.SIGN)) {
             signBlock = (Sign) event.getBlock().getRelative(BlockFace.UP).getState();
         }
         if (signBlock != null) {
@@ -193,6 +202,34 @@ public class signRankListener implements Listener {
                 if (!event.getPlayer().hasPermission("SignRank.create")) {
                     event.getPlayer().sendMessage(ChatColor.RED + "You are not allowed to break lot signs.");
                     event.setCancelled(true);
+                }
+            }
+            if (signBlock.getLine(0).toLowerCase().contains("[update]")) {
+                Player player = event.getPlayer();
+                if (signRank.worldGuard.getRegionContainer().get(BukkitAdapter.adapt(player.getWorld())).getApplicableRegions(BukkitAdapter.asVector(event.getBlock().getLocation())).iterator().hasNext()) {
+                    ProtectedRegion region = signRank.worldGuard.getRegionContainer().get(BukkitAdapter.adapt(player.getWorld())).getApplicableRegions(BukkitAdapter.asVector(event.getBlock().getLocation())).iterator().next();
+                    if (!plugin.IGNORE_REGIONS.contains(region.getId())) {
+                        AbstractPlayerActor wgPlayer = (AbstractPlayerActor) BukkitAdapter.adapt(player);
+                        boolean isOwner = region.isOwner((LocalPlayer) wgPlayer);
+                        
+                        if (player.hasPermission("SignRank.update") || isOwner) {
+                            for (int i = 1 ; i < signBlock.getLines().length ; i++) {
+                                String line = signBlock.getLines()[i];
+                                if (line.length() != 0) {
+                                    DefaultDomain owners = region.getOwners();
+                                    owners.removePlayer(line);
+                                    region.setOwners(owners);
+                                    try {
+                                        signRank.worldGuard.getRegionContainer().get(BukkitAdapter.adapt(player.getWorld())).save();
+                                    } catch (StorageException ex) {
+                                        Logger.getLogger(signRankListener.class.getName()).log(Level.SEVERE, null, ex);
+                                    }
+                                    player.sendMessage(line + ChatColor.RED + " Removed");
+                                }
+                            }
+                            return;
+                        }
+                    }
                 }
             }
         }
